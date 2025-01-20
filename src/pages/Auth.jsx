@@ -1,14 +1,17 @@
 import { faStackOverflow } from '@fortawesome/free-brands-svg-icons'
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import lock from '../assets/lock.png'
 import { loginApi, registerRequestApi } from '../service/allApi'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { loginResponseContext } from '../context/ContextShare'
 
 function Auth({ register }) {
+
+  const {setLoginResponse} = useContext(loginResponseContext)
 
   const navigate = useNavigate()
 
@@ -58,6 +61,7 @@ function Auth({ register }) {
       console.log(result);
       if(result.status >= 200 && result.status < 300){
         toast.success('Login successfull')
+        setLoginResponse(true)
 
         sessionStorage.setItem("existingUsers",JSON.stringify(result.data.existingUsers))
         sessionStorage.setItem("token",result.data.token)
@@ -79,8 +83,6 @@ function Auth({ register }) {
     }
 
   }
-
-  
 
   return (
     <>

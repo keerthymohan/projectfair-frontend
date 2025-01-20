@@ -1,14 +1,19 @@
 import { faPenToSquare } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import React, { useEffect } from 'react'
+import React, { useContext, useEffect } from 'react'
 import { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import { serverUrl } from '../service/serviceUrl';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { updateUserProjectApi } from '../service/allApi';
+import { editProjectResponse } from '../context/ContextShare';
 
 function EditProject({ projects }) {
+  const {setEditResponse} = useContext(editProjectResponse)
   const [show, setShow] = useState(false);
-  console.log(projects);
+  // console.log(projects);
 
   const [preview, setPreview] = useState("")
 
@@ -20,7 +25,7 @@ function EditProject({ projects }) {
     overview: projects.overview,
     projectImage: ""
   })
-  console.log(projectDetails);
+  // console.log(projectDetails);
   const [key,setKey] = useState(1)
 
   const handleFile = (e) => {
@@ -59,6 +64,67 @@ function EditProject({ projects }) {
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
+
+  const handleUpdate = async()=>{
+    const {title,language,github,website,overview,projectImage} = projectDetails
+    if(!title || !language|| !github||!website||!overview){
+      toast.info('fill the form completely')
+    }else{
+      const reqBody = new FormData()
+      reqBody.append("title",title)
+      reqBody.append("language",language)
+      reqBody.append("github",github)
+      reqBody.append("website",website)
+      reqBody.append("overview",overview)
+      preview?reqBody.append("projectImage",projectImage) : reqBody.append("projectImage",projects.projectImage)
+
+      const token = sessionStorage.getItem("token")
+      if(preview){
+        const reqHeader = {
+          "Content-Type":"multipart/form-data",
+          "Authorization":`Bearer ${token}`
+        }
+
+        const result = await updateUserProjectApi(projects._id,reqBody,reqHeader)
+        console.log(result);
+
+        if(result.status ==200){
+          setEditResponse(result)
+          toast.success('project updated successfully')
+          setTimeout(()=>{
+            handleClose()
+          },[2000])
+        }else{
+          handleCancel()
+          toast.error('something went wrong')
+        }
+        
+      }else{
+        const reqHeader = {
+          "Content-Type":"application/json",
+          "Authorization":`Bearer ${token}`
+        }
+
+        const result = await updateUserProjectApi(projects._id,reqBody,reqHeader)
+        console.log(result);
+
+        if(result.status ==200){
+          setEditResponse(result)
+          toast.success('project updated successfully')
+          setTimeout(()=>{
+            handleClose()
+          },[2000])
+        }else{
+          handleCancel()
+          toast.error('something went wrong')
+        }
+
+      }
+    }
+
+  }
+
+
   return (
     <>
       <FontAwesomeIcon icon={faPenToSquare} onClick={handleShow} className='me-3 text-info' />
@@ -104,10 +170,12 @@ function EditProject({ projects }) {
           <Button variant="warning me-3" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button variant="info" onClick={handleClose}>
+          <Button variant="info" onClick={handleUpdate}>
             UPDATE
           </Button>
         </Modal.Footer>
+              <ToastContainer position='top-center' theme="colored" autoClose={2000}/>
+        
       </Modal>
     </>
   )
